@@ -55,12 +55,6 @@ final class CacheConfiguration implements CacheConfigurationInterface
 
     private $streamSupport;
 
-    /**
-     * @var bool
-     */
-
-    private $keyForceNotQuery;
-
 
 
     /**
@@ -70,16 +64,14 @@ final class CacheConfiguration implements CacheConfigurationInterface
      * @param callable|null $ttl
      */
     public function __construct(array $urls, array $headers = [], Clock $clock = null, callable $ttl = null, $extra = [
-        'streamSupport' => false,
-        'key_force_not_query' => false,
+        'stream_support' => false,
     ])
     {
         $this->sortUrls($urls);
         $this->headers = $headers;
-        $this->clock = $clock instanceof Clock ? $clock : new SystemClock();
+        $this->clock = $clock instanceof Clock ? $clock : SystemClock::fromUTC();
         $this->ttl = $ttl;
-        $this->streamSupport = $extra['streamSupport'] ?? false;
-        $this->keyForceNotQuery = $extra['key_force_not_query'] ?? false;
+        $this->streamSupport = $extra['stream_support'] ?? false;
     }
 
     public function requestIsCacheable(ServerRequestInterface $request): bool
@@ -98,7 +90,7 @@ final class CacheConfiguration implements CacheConfigurationInterface
 
     public function responseIsCacheable(ServerRequestInterface $request, ResponseInterface $response): bool
     {
-        return true;
+        return $response->getStatusCode() === 200;
     }
 
     public function cacheKey(ServerRequestInterface $request): string
@@ -136,7 +128,7 @@ final class CacheConfiguration implements CacheConfigurationInterface
             'code' => $response->getStatusCode(),
             'time' => (int)$this->clock->now()->format('U'),
             'headers' => $headers,
-            'body' => (string)$response->getBody(),
+            'body' =>  (string) $response->getBody(),
         ]);
     }
 

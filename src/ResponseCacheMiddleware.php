@@ -11,6 +11,7 @@ use React\Cache\CacheInterface;
 use React\Http\Io\HttpBodyStream;
 use function React\Promise\resolve;
 use function RingCentral\Psr7\stream_for;
+use React\Http\Message\Response;
 
 final class ResponseCacheMiddleware
 {
@@ -44,7 +45,13 @@ final class ResponseCacheMiddleware
 
         return $this->cache->get($key)->then(function ($json) use ($next, $request, $key) {
             if ($json !== null) {
-                return $this->cacheConfiguration->cacheDecode($json);
+                $response = $this->cacheConfiguration->cacheDecode($json);
+                if ($response->getHeaderLine('Last-Modified')) {
+                    if ($request->getHeaderLine('If-Modified-Since') === $response->getHeaderLine('Last-Modified')) {
+                        return new Response(Response::STATUS_NOT_MODIFIED);
+                    }
+                }
+                return $response;
             }
 
             return resolve($next($request))->then(function (ResponseInterface $response) use ($request, $key) {
@@ -67,7 +74,7 @@ final class ResponseCacheMiddleware
 
                     $body->on('end', function () use ($request, $response, &$buffer, $key) {
                         $ttl = $this->cacheConfiguration->cacheTtl($request, $response);
-                        $encodedResponse = $this->cacheConfiguration->cacheEncode($response->withBody(stream_for($buffer)));
+                        $encodedResponse = $this->cacheConfiguration->cacheEncode($response->withBody(stream_for((string)$buffer)));
                         $buffer = null;
                         $this->cache->set($key, $encodedResponse, $ttl);
                     });
