@@ -13,7 +13,7 @@ To install via [Composer](http://getcomposer.org/), use the command below, it wi
 the latest version and bind it with `^`.
 
 ```
-composer require wyrihaximus/react-http-middleware-response-cache
+composer require wpjscc/react-http-middleware-response-cache
 ```
 
 This middleware caches the response code and body from a list of given URL's. Note that not headers will be 
@@ -43,7 +43,11 @@ $server = new Server([
                 'Content-Type',
             ]
         ),
-        new ArrayCache() // Optional, will default to ArrayCache but any CacheInterface cache will work. 
+        new ArrayCache(), // Optional, will default to ArrayCache but any CacheInterface cache will work.
+        null,
+        [
+            'stream_support' => true,
+        ]
     ),
     /** Other middleware */
 ]);
