@@ -1,6 +1,8 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace WyriHaximus\React\Http\Middleware;
+declare(strict_types=1);
+
+namespace Wpjscc\React\Http\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -46,20 +48,35 @@ final class ResponseCacheMiddleware
             }
 
             return resolve($next($request))->then(function (ResponseInterface $response) use ($request, $key) {
-                if ($response->getBody() instanceof HttpBodyStream) {
+                if ($response->getBody() instanceof HttpBodyStream && !$this->cacheConfiguration->isSupportStreamedResponse()) {
                     return $response;
                 }
+
 
                 if (!$this->cacheConfiguration->responseIsCacheable($request, $response)) {
                     return $response;
                 }
 
-                $ttl = $this->cacheConfiguration->cacheTtl($request, $response);
-                $body = (string)$response->getBody();
-                $encodedResponse = $this->cacheConfiguration->cacheEncode($response->withBody(stream_for($body)));
-                $this->cache->set($key, $encodedResponse, $ttl);
+                $body =  $response->getBody();
 
-                return $response->withBody(stream_for($body));
+                if ($response->getBody() instanceof HttpBodyStream) {
+                    $buffer = '';
+                    $body->on('data', function ($data) use (&$buffer) {
+                        $buffer .= $data;
+                    });
+
+                    $body->on('end', function () use ($request, $response, &$buffer, $key) {
+                        $ttl = $this->cacheConfiguration->cacheTtl($request, $response);
+                        $encodedResponse = $this->cacheConfiguration->cacheEncode($response->withBody(stream_for($buffer)));
+                        $buffer = null;
+                        $this->cache->set($key, $encodedResponse, $ttl);
+                    });
+                } else {
+                    $ttl = $this->cacheConfiguration->cacheTtl($request, $response);
+                    $encodedResponse = $this->cacheConfiguration->cacheEncode($response->withBody(stream_for((string)$body)));
+                    $this->cache->set($key, $encodedResponse, $ttl);
+                }
+                return $response;
             });
         });
     }

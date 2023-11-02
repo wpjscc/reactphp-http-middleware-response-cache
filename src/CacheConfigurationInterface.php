@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace WyriHaximus\React\Http\Middleware;
+namespace Wpjscc\React\Http\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -57,4 +57,6 @@ interface CacheConfigurationInterface
      * @return ResponseInterface
      */
     public function cacheDecode(string $response): ResponseInterface;
+
+    public function isSupportStreamedResponse(): bool;
 }

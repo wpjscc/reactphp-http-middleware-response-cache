@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace WyriHaximus\React\Http\Middleware;
+namespace Wpjscc\React\Http\Middleware;
 
 use Lcobucci\Clock\Clock;
 use Lcobucci\Clock\SystemClock;
@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RingCentral\Psr7\Response;
 use function RingCentral\Psr7\stream_for;
+use MessagePack\MessagePack;
 
 final class CacheConfiguration implements CacheConfigurationInterface
 {
@@ -49,17 +50,36 @@ final class CacheConfiguration implements CacheConfigurationInterface
     private $ttl;
 
     /**
+     * @var bool
+     */
+
+    private $streamSupport;
+
+    /**
+     * @var bool
+     */
+
+    private $keyForceNotQuery;
+
+
+
+    /**
      * @param array         $urls
      * @param array         $headers
      * @param Clock|null    $clock
      * @param callable|null $ttl
      */
-    public function __construct(array $urls, array $headers = [], Clock $clock = null, callable $ttl = null)
+    public function __construct(array $urls, array $headers = [], Clock $clock = null, callable $ttl = null, $extra = [
+        'streamSupport' => false,
+        'key_force_not_query' => false,
+    ])
     {
         $this->sortUrls($urls);
         $this->headers = $headers;
         $this->clock = $clock instanceof Clock ? $clock : new SystemClock();
         $this->ttl = $ttl;
+        $this->streamSupport = $extra['streamSupport'] ?? false;
+        $this->keyForceNotQuery = $extra['key_force_not_query'] ?? false;
     }
 
     public function requestIsCacheable(ServerRequestInterface $request): bool
@@ -112,7 +132,7 @@ final class CacheConfiguration implements CacheConfigurationInterface
             $headers[$header] = $response->getHeaderLine($header);
         }
 
-        return msgpack_pack([
+        return MessagePack::pack([
             'code' => $response->getStatusCode(),
             'time' => (int)$this->clock->now()->format('U'),
             'headers' => $headers,
@@ -122,7 +142,7 @@ final class CacheConfiguration implements CacheConfigurationInterface
 
     public function cacheDecode(string $response): ResponseInterface
     {
-        $response = msgpack_unpack($response);
+        $response = MessagePack::unpack($response);
         $response['headers'] = (array)$response['headers'];
         $response['headers']['Age'] = (int)$this->clock->now()->format('U') - (int)$response['time'];
 
@@ -175,5 +195,10 @@ final class CacheConfiguration implements CacheConfigurationInterface
         }
 
         return false;
+    }
+
+    public function isSupportStreamedResponse(): bool
+    {
+        return $this->streamSupport;
     }
 }

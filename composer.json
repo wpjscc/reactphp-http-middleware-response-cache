@@ -1,5 +1,5 @@
 {
-    "name": "wyrihaximus/react-http-middleware-response-cache",
+    "name": "wpjscc/react-http-middleware-response-cache",
     "description": "Response caching middleware for @reactphp's HTTP server",
     "license": "MIT",
     "authors": [
@@ -9,32 +9,28 @@
         }
     ],
     "require": {
-        "php": "^7.2",
-        "lcobucci/clock": "^1.1",
+        "php": ">=8.2",
+        "lcobucci/clock": "^3.1",
         "psr/http-message": "^1.0",
-        "react/cache": "^1.0 || 0.6 || ^0.5.0",
-        "react/http": "^1.0.0",
-        "react/promise": "^2.7",
-        "wyrihaximus/msgpack": "^1.0"
-    },
-    "require-dev": {
-        "wyrihaximus/async-test-utilities": "^1.1",
-        "ringcentral/psr7": "^1.2"
+        "react/cache": "^1.2",
+        "react/http": "^1.9",
+        "react/promise": "^3 || ^2.3 || ^1.2.1",
+        "rybakit/msgpack": "^0.9.1"
     },
     "autoload": {
         "psr-4": {
-            "WyriHaximus\\React\\Http\\Middleware\\": "src/"
+            "Wpjscc\\React\\Http\\Middleware\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "WyriHaximus\\React\\Tests\\Http\\Middleware\\": "tests/"
+            "Wpjscc\\React\\Tests\\Http\\Middleware\\": "tests/"
         }
     },
     "config": {
         "sort-packages": true,
         "platform": {
-            "php": "7.2"
+            "php": "8.2"
         }
     },
     "scripts": {
